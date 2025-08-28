@@ -1,0 +1,75 @@
+import React from 'react';
+import type { ChatMessage as ChatMessageType } from '../types';
+import { Sender } from '../types';
+import { UserIcon, BotIcon } from './Icons';
+
+interface ChatMessageProps {
+  message: ChatMessageType;
+}
+
+// Component to format message text, handling links and newlines.
+const FormattedText: React.FC<{ text: string }> = ({ text }) => {
+  const urlRegex = /(\bhttps?:\/\/[^\s()<>]+(?:\([\w\d]+\)|(?:[^.,\s]|\/)))/g;
+
+  return (
+    <>
+      {text.split('\n').map((line, lineIndex, arr) => (
+        <span key={lineIndex}>
+          {line.split(urlRegex).map((part, partIndex) => {
+            if (part.match(urlRegex)) {
+              return (
+                <a
+                  key={partIndex}
+                  href={part}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-cyan-400 font-medium hover:underline focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-slate-700 focus:ring-cyan-500 rounded"
+                >
+                  {part}
+                </a>
+              );
+            }
+            return <React.Fragment key={partIndex}>{part}</React.Fragment>;
+          })}
+          {lineIndex < arr.length - 1 && <br />}
+        </span>
+      ))}
+    </>
+  );
+};
+
+const ChatMessage: React.FC<ChatMessageProps> = ({ message }) => {
+  const isUserModel = message.sender === Sender.User;
+
+  const wrapperClasses = isUserModel ? 'flex justify-end' : 'flex justify-start';
+  const messageClasses = isUserModel
+    ? 'bg-blue-600 text-white'
+    : 'bg-slate-700 text-slate-200';
+  const icon = isUserModel ? (
+    <div className="flex-shrink-0 w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center">
+        <UserIcon className="w-6 h-6 text-slate-300" />
+    </div>
+  ) : (
+    <div className="flex-shrink-0 w-10 h-10 bg-slate-700 rounded-full flex items-center justify-center">
+        <BotIcon className="w-6 h-6 text-cyan-400" />
+    </div>
+  );
+
+  return (
+    <div className={`${wrapperClasses} w-full animate-fade-in`}>
+      <div className={`flex items-start space-x-4 max-w-2xl ${isUserModel ? 'flex-row-reverse space-x-reverse' : ''}`}>
+        {icon}
+        <div
+          className={`px-4 py-3 rounded-xl ${messageClasses} shadow-md`}
+          style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}
+        >
+          <div className="text-base leading-relaxed">
+            {message.text && <FormattedText text={message.text} />}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default ChatMessage;
